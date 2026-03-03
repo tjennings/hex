@@ -2,6 +2,8 @@
   "name": "hex",
   "description": "Distilled development discipline: TDD, debugging, verification, and collaboration patterns",
   "version": "1.0.0",
+  "homepage": "https://github.com/tjennings/hex",
+  "repository": "https://github.com/tjennings/hex",
   "author": {
     "name": "ltj"
   },

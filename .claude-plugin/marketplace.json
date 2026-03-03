@@ -1,0 +1,17 @@
+{
+  "name": "hex",
+  "owner": {
+    "name": "ltj"
+  },
+  "metadata": {
+    "description": "Distilled development discipline: TDD, debugging, verification, and collaboration patterns",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "hex",
+      "source": "./",
+      "description": "14 skills + 3 commands + 1 agent for TDD, systematic debugging, verification, code review, and collaboration workflows"
+    }
+  ]
+}
