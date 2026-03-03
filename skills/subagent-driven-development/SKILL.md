@@ -1,98 +1,129 @@
 ---
 name: subagent-driven-development
-description: Use when executing implementation plans with independent tasks in the current session
+description: Use when executing implementation plans or facing 2+ independent tasks that benefit from parallel work
 ---
 
 # Subagent-Driven Development
 
-Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
+Execute tasks by creating an agent team with parallel implementer-reviewer streams. Up to 3 streams run concurrently. Each stream is autonomous: implementer builds, reviewer gates.
 
-**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
+**Core principle:** Agent teams + parallel streams + three-stage review (spec → quality → simplify) = high quality, fast throughput
 
 ## When to Use
 
-Ask yourself three questions:
-1. **Have implementation plan?** No -> Manual execution or brainstorm first
-2. **Tasks mostly independent?** No (tightly coupled) -> Manual execution or brainstorm first
-3. **Stay in this session?** No (parallel session) -> hex:executing-plans
+Ask yourself:
+1. **Have tasks to execute?** (plan or ad-hoc list) No → brainstorm first
+2. **Are tasks mostly independent?** No (tightly coupled, shared state) → manual execution
+3. **All yes → subagent-driven-development**
 
-All yes -> **subagent-driven-development**
+Works for both structured plan execution AND ad-hoc parallel tasks.
 
 **vs. Executing Plans (parallel session):**
 - Same session (no context switch)
-- Fresh subagent per task (no context pollution)
-- Two-stage review after each task: spec compliance first, then code quality
-- Faster iteration (no human-in-loop between tasks)
+- Agent teams with parallel streams (not sequential standalone agents)
+- Three-stage review per task: spec compliance → code quality → /simplify
+- Faster throughput (up to 3 tasks in parallel)
+
+## Team Structure
+
+One team per execution. Streams scale to task count:
+
+| Tasks | Streams | Team size |
+|-|-|-|
+| 1 | 1 | 1 lead + 1 implementer + 1 reviewer = 3 |
+| 2 | 2 | 1 lead + 2 implementers + 2 reviewers = 5 |
+| 3+ | 3 (max) | 1 lead + 3 implementers + 3 reviewers = 7 |
+
+### Agent Type Selection
+
+Before creating the team, detect language-specialized agents:
+
+1. Scan project context: file extensions, CLAUDE.md, plan content
+2. Check if specialized agents exist (e.g. `rust-developer`, `rust-perf-reviewer`)
+3. If found → use as `subagent_type` for implementers/reviewers
+4. If not found → use `general-purpose` for implementers, `code-reviewer` for reviewers
+
+### Roles
+
+- **Lead (you):** Creates team, detects agent types, creates tasks, assigns work to streams, assigns next task when streams complete, runs final verification
+- **Implementer (impl-1, impl-2, impl-3):** Receives task from lead, implements with TDD (`hex:test-driven-development`), commits, messages paired reviewer
+- **Reviewer (reviewer-1, reviewer-2, reviewer-3):** Spec compliance → code quality → `/simplify`. Coordinates fixes directly with paired implementer. Messages lead when approved.
+
+Implementer N pairs with reviewer N. Pairs communicate directly without lead involvement.
 
 ## The Process
 
-1. **Read plan** - Extract all tasks with full text, note context, create TaskCreate items
-2. **Per task** (sequential, one at a time):
-   a. Dispatch implementer subagent (`./implementer-prompt.md`) with full task text + context
-   b. If implementer asks questions -> answer clearly, provide context, re-dispatch
-   c. Implementer implements, tests, commits, self-reviews
-   d. Dispatch spec reviewer (`./spec-reviewer-prompt.md`)
-   e. If spec issues found -> implementer fixes -> re-dispatch spec reviewer -> repeat until pass
-   f. Dispatch code quality reviewer (`./code-quality-reviewer-prompt.md`)
-   g. If quality issues found -> implementer fixes -> re-dispatch quality reviewer -> repeat until pass
-   h. Mark task complete in TaskCreate -> next task
-3. **After all tasks**: Dispatch final code reviewer for entire implementation
-4. **Finish**: Use `hex:finishing-a-development-branch`
+### Step 1 — Gather tasks
+- If plan exists: read plan, extract tasks with full text
+- If ad-hoc: collect task descriptions from user
+- Create TaskCreate items for all tasks
 
-## Prompt Templates
+### Step 2 — Detect agent types
+- Scan project for language indicators
+- Check if specialized agents exist
+- Fall back to `general-purpose` / `code-reviewer` defaults
 
-- `./implementer-prompt.md` - Dispatch implementer subagent
-- `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
-- `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
+### Step 3 — Create team & spawn streams
+- `TeamCreate` with descriptive name
+- Spawn implementer + reviewer pairs (up to 3 streams)
+- Each pair uses detected agent types
 
-## Example Workflow (Summary)
+### Step 4 — Assign initial tasks
+- Lead assigns one task per stream via `SendMessage` to implementers
+- Include: full task text, plan context, paired reviewer name
 
-1. Read plan, extract 5 tasks, create TaskCreate
-2. Per task: dispatch implementer -> answer any questions -> implementer implements/tests/commits
-3. Spec reviewer checks compliance; implementer fixes any gaps; re-review until approved
-4. Code quality reviewer checks; implementer fixes any issues; re-review until approved
-5. After all tasks: final code reviewer confirms everything, then `hex:finishing-a-development-branch`
+### Step 5 — Stream loop (autonomous)
+Within each stream, without lead involvement:
+1. Implementer implements with TDD, runs `hex:verification-before-completion`, commits, messages their reviewer
+2. Reviewer checks spec compliance → if issues, messages implementer → fix loop → repeat until pass
+3. Reviewer checks code quality → same fix loop until pass
+4. Reviewer runs `/simplify` → same fix loop until pass
+5. Reviewer messages lead: "task approved"
+
+### Step 6 — Reassignment
+- When lead receives approval, assigns next unfinished task to that stream's implementer
+- Repeat until all tasks complete
+
+### Step 7 — Final
+- Lead runs final verification across all work
+- Use `hex:finishing-a-development-branch`
+- Shut down team
 
 ## Red Flags
 
 **Never:**
-- Start implementation on main/master without explicit user consent
-- Skip reviews (spec compliance OR code quality)
-- Proceed with unfixed issues
-- Dispatch multiple implementation subagents in parallel (conflicts)
-- Make subagent read plan file (provide full text instead)
-- Skip scene-setting context (subagent needs to understand where task fits)
-- Ignore subagent questions (answer before letting them proceed)
-- Accept "close enough" on spec compliance (issues found = not done)
-- Skip review loops (issues found = implementer fixes = review again)
-- Let implementer self-review replace actual review (both are needed)
-- **Start code quality review before spec compliance is approved** (wrong order)
-- Move to next task while either review has open issues
+- Skip team creation (no standalone Agent calls — always teams)
+- Assign more than one task per stream at a time
+- Let lead intervene in implementer-reviewer loops (autonomous streams)
+- Spawn more than 3 streams regardless of task count
+- Start a stream without both implementer and reviewer spawned
+- Skip any review stage (spec → quality → simplify, all three required)
+- Move to next task while reviewer has open issues
+- Let implementer self-review replace dedicated reviewer
+- Start quality review before spec compliance passes
+- Run `/simplify` before code quality passes
 
-**If subagent asks questions:**
-- Answer clearly and completely
-- Provide additional context if needed
-- Don't rush them into implementation
+**If implementer gets stuck:**
+- Reviewer can help via direct message
+- If both stuck, they message the lead
+- Lead provides context/decisions, doesn't implement
 
-**If reviewer finds issues:**
-- Implementer (same subagent) fixes them
-- Reviewer reviews again; repeat until approved
-- Don't skip the re-review
-
-**If subagent fails task:**
-- Dispatch fix subagent with specific instructions
-- Don't try to fix manually (context pollution)
+**If streams conflict (edited same files):**
+- Lead pauses remaining streams
+- Resolves conflicts
+- Resumes streams
 
 ## Integration
 
 **Required workflow skills:**
-- **hex:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
-- **hex:writing-plans** - Creates the plan this skill executes
-- **hex:requesting-code-review** - Code review template for reviewer subagents
-- **hex:finishing-a-development-branch** - Complete development after all tasks
+- **hex:using-git-worktrees** — set up isolated workspace before starting
+- **hex:writing-plans** — creates plans this skill executes (for plan-based work)
+- **hex:finishing-a-development-branch** — complete development after all tasks
 
-**Subagents should use:**
-- **hex:test-driven-development** - Subagents follow TDD for each task
+**Teammates should use:**
+- **hex:test-driven-development** — implementers follow TDD
+- **hex:verification-before-completion** — implementers verify before notifying reviewer
+- **simplify** — reviewers run as final review stage
 
 **Alternative workflow:**
-- **hex:executing-plans** - Use for parallel session instead of same-session execution
+- **hex:executing-plans** — use for parallel session instead of same-session execution
