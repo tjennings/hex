@@ -5,11 +5,18 @@ description: Use when implementing any feature or bugfix, before writing impleme
 
 # Test-Driven Development (TDD)
 
-Write the test first. Watch it fail. Write minimal code to pass.
+Write the test first. Watch it fail. Write minimal code to pass. **Work outside-in.**
 
 **Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
+
+## Outside-In TDD
+
+- **Start at the outermost layer** (adapter/API/UI) with a failing acceptance or integration test that describes the feature from the user's perspective
+- **Drive inward:** the outer test reveals what the coordination layer needs; write a failing test there, implement it, then let that reveal what the domain needs
+- **The outer test stays red** until all inner layers are built — it becomes your acceptance gate
+- **Final step:** run the outer test with real implementations to verify the full stack
 
 ## When to Use
 
@@ -45,7 +52,7 @@ test('retries failed operations 3 times', async () => {
 });
 ```
 
-**Requirements:** One behavior. Clear name. Real code (no mocks unless unavoidable).
+**Requirements:** One behavior. Clear name. Prefer integration-level test harnesses over mocks and stubs — enables internal refactoring without breaking tests.
 
 ### Verify RED - MANDATORY. Never skip.
 
@@ -164,7 +171,7 @@ PASS
 - [ ] Wrote minimal code to pass each test
 - [ ] All tests pass
 - [ ] Output pristine (no errors, warnings)
-- [ ] Tests use real code (mocks only if unavoidable)
+- [ ] Tests use integration-level test harnesses over mocks and stubs — enables internal refactoring without breaking tests
 - [ ] Edge cases and errors covered
 
 Can't check all boxes? You skipped TDD. Start over.

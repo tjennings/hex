@@ -87,6 +87,16 @@ git commit -m "feat: add specific feature"
 ```
 ````
 
+## Architecture: Hexagonal Layers
+
+Plans MUST organize tasks into these layers, built outside-in:
+
+- **I/O Adapters** — Wraps serialization and transport: HTTP handlers, database repos, stream processors, CLI parsers. Implements ports defined by coordination layer.
+- **Coordination** — Orchestrates domain operations with external I/O. Depends on domain, never on adapters directly (uses ports/interfaces).
+- **Domain** (core) — Pure business logic and types. No imports from outer layers. No I/O.
+
+**Build order:** Adapters first (define the interface the user sees), then coordination, then domain. Start each task with a failing test at the outermost layer and drive inward. Each task should live in exactly one layer.
+
 ## Remember
 - Exact file paths always
 - Complete code in plan (not "add validation")
