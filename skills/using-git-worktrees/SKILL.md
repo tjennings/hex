@@ -72,8 +72,11 @@ No .gitignore verification needed - outside project entirely.
 ```bash
 project=$(basename "$(git rev-parse --show-toplevel)")
 ```
+### 2. Create Feature Branch
+Create a new feature branch, all work trees will use this branch.
 
 ### 2. Create Worktree
+Using the new feature branch, create work trees from it.
 
 ```bash
 case $LOCATION in
@@ -126,7 +129,7 @@ Ready to implement <feature-name>
 ## Example Workflow
 
 ```
-[Check .worktrees/ - exists] → [Verify ignored] → [Create worktree] → [Run setup] → [Run tests] → Report ready
+[Check .worktrees/ - exists] → [Verify ignored] → [Create Feature Branch] → [Create worktree] → [Run setup] → [Run tests] → Report ready
 ```
 
 ## Red Flags

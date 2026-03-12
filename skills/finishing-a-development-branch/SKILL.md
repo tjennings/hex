@@ -25,6 +25,7 @@ npm test / cargo test / pytest / go test ./...
 ```
 
 **If tests fail:**
+
 ```
 Tests failing (<N> failures). Must fix before completing:
 
@@ -114,6 +115,7 @@ Report: "Keeping branch <name>. Worktree preserved at <path>."
 #### Option 4: Discard
 
 **Confirm first:**
+
 ```
 This will permanently delete:
 - Branch <name>
@@ -126,6 +128,7 @@ Type 'discard' to confirm.
 Wait for exact confirmation.
 
 If confirmed:
+
 ```bash
 git checkout <base-branch>
 git branch -D <feature-branch>
@@ -138,11 +141,13 @@ Then: Cleanup worktree (Step 5)
 **For Options 1, 2, 4:**
 
 Check if in worktree:
+
 ```bash
 git worktree list | grep $(git branch --show-current)
 ```
 
 If yes:
+
 ```bash
 git worktree remove <worktree-path>
 ```
@@ -151,16 +156,17 @@ git worktree remove <worktree-path>
 
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|-|-|-|-|-|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force) |
+| Option           | Merge | Push | Keep Worktree | Cleanup Branch |
+| ---------------- | ----- | ---- | ------------- | -------------- |
+| 1. Merge locally | ✓     | -    | -             | ✓              |
+| 2. Create PR     | -     | ✓    | ✓             | -              |
+| 3. Keep as-is    | -     | -    | ✓             | -              |
+| 4. Discard       | -     | -    | -             | ✓ (force)      |
 
 ## Red Flags
 
 **Never:**
+
 - Proceed with failing tests
 - Merge without verifying tests on result
 - Delete work without confirmation
@@ -169,6 +175,7 @@ git worktree remove <worktree-path>
 - Automatically cleanup worktree for Options 2 or 3 — only cleanup for Options 1 and 4
 
 **Always:**
+
 - Verify tests before offering options
 - Present exactly 4 options
 - Get typed "discard" confirmation for Option 4
@@ -178,8 +185,10 @@ git worktree remove <worktree-path>
 ## Integration
 
 **Called by:**
+
 - **hex:subagent-driven-development** (Step 7) - After all tasks complete
 - **hex:executing-plans** (Step 5) - After all batches complete
 
 **Pairs with:**
+
 - **hex:using-git-worktrees** - Cleans up worktree created by that skill

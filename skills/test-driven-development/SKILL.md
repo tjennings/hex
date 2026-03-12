@@ -27,27 +27,42 @@ Thinking "skip TDD just this once"? Stop. That's rationalization.
 ## The Iron Law
 
 ```
-NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
+NO NEW CODE WITHOUT A FAILING TEST FIRST
 ```
 
 Write code before the test? Delete it. Start over. Don't keep it as "reference". Don't "adapt" it while writing tests. Don't look at it. Delete means delete. Implement fresh from tests. Period.
+
+## REQUIRED Verification Checklist
+
+- [ ] Every new function/method has ONE test for every TWO lines of code.
+- [ ] Every new function/method has TWO tests for every CODE BRANCH.
+- [ ] Every new function/method has a Test for parameter edge cases (max value, min value, etc)
+- [ ] Watched each test fail before implementing
+- [ ] Each test failed for expected reason (feature missing, not typo)
+- [ ] Wrote minimal code to pass each test
+- [ ] All tests pass
+- [ ] Output pristine (no errors, warnings)
+- [ ] Tests use integration-level test harnesses over mocks and stubs — enables internal refactoring without breaking tests
+- [ ] Edge cases and errors covered
+
+Can't check all boxes? You skipped TDD. Start over.
 
 ## Red-Green-Refactor
 
 ### RED - Write Failing Test
 
 ```typescript
-test('retries failed operations 3 times', async () => {
+test("retries failed operations 3 times", async () => {
   let attempts = 0;
   const operation = () => {
     attempts++;
-    if (attempts < 3) throw new Error('fail');
-    return 'success';
+    if (attempts < 3) throw new Error("fail");
+    return "success";
   };
 
   const result = await retryOperation(operation);
 
-  expect(result).toBe('success');
+  expect(result).toBe("success");
   expect(attempts).toBe(3);
 });
 ```
@@ -74,7 +89,7 @@ async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
       if (i === 2) throw e;
     }
   }
-  throw new Error('unreachable');
+  throw new Error("unreachable");
 }
 ```
 
@@ -89,6 +104,7 @@ Run tests. Confirm: (1) test passes, (2) other tests still pass, (3) output pris
 ### REFACTOR - Clean Up
 
 After green only:
+
 - Remove duplication
 - Improve names
 - Extract helpers
@@ -97,21 +113,21 @@ Keep tests green. Don't add behavior.
 
 ## Good Tests
 
-| Quality | Good | Bad |
-|-|-|-|
-| **Minimal** | One thing. "and" in name? Split it. | `test('validates email and domain and whitespace')` |
-| **Clear** | Name describes behavior | `test('test1')` |
-| **Shows intent** | Demonstrates desired API | Obscures what code should do |
+| Quality          | Good                                | Bad                                                 |
+| ---------------- | ----------------------------------- | --------------------------------------------------- |
+| **Minimal**      | One thing. "and" in name? Split it. | `test('validates email and domain and whitespace')` |
+| **Clear**        | Name describes behavior             | `test('test1')`                                     |
+| **Shows intent** | Demonstrates desired API            | Obscures what code should do                        |
 
 ## Common Rationalizations
 
-| Excuse | Reality |
-|-|-|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. You never saw it catch the bug. |
-| "Already manually tested" | Ad-hoc ≠ systematic. No record, can't re-run, can't prove edge cases. |
-| "Deleting X hours is wasteful" | Sunk cost fallacy. Keeping unverified code is technical debt. |
-| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
+| Excuse                                  | Reality                                                                                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| "Too simple to test"                    | Simple code breaks. Test takes 30 seconds.                                                                                                       |
+| "I'll test after"                       | Tests passing immediately prove nothing. You never saw it catch the bug.                                                                         |
+| "Already manually tested"               | Ad-hoc ≠ systematic. No record, can't re-run, can't prove edge cases.                                                                            |
+| "Deleting X hours is wasteful"          | Sunk cost fallacy. Keeping unverified code is technical debt.                                                                                    |
+| "Keep as reference, write tests first"  | You'll adapt it. That's testing after. Delete means delete.                                                                                      |
 | "TDD is dogmatic / I'm being pragmatic" | TDD IS pragmatic: finds bugs before commit, prevents regressions, enables refactoring. "Pragmatic" shortcuts = debugging in production = slower. |
 
 ## Red Flags - STOP and Start Over
@@ -132,30 +148,34 @@ Keep tests green. Don't add behavior.
 **Bug:** Empty email accepted
 
 **RED**
+
 ```typescript
-test('rejects empty email', async () => {
-  const result = await submitForm({ email: '' });
-  expect(result.error).toBe('Email required');
+test("rejects empty email", async () => {
+  const result = await submitForm({ email: "" });
+  expect(result.error).toBe("Email required");
 });
 ```
 
 **Verify RED**
+
 ```bash
 $ npm test
 FAIL: expected 'Email required', got undefined
 ```
 
 **GREEN**
+
 ```typescript
 function submitForm(data: FormData) {
   if (!data.email?.trim()) {
-    return { error: 'Email required' };
+    return { error: "Email required" };
   }
   // ...
 }
 ```
 
 **Verify GREEN**
+
 ```bash
 $ npm test
 PASS
@@ -163,24 +183,11 @@ PASS
 
 **REFACTOR:** Extract validation for multiple fields if needed.
 
-## Verification Checklist
-
-- [ ] Every new function/method has a test
-- [ ] Watched each test fail before implementing
-- [ ] Each test failed for expected reason (feature missing, not typo)
-- [ ] Wrote minimal code to pass each test
-- [ ] All tests pass
-- [ ] Output pristine (no errors, warnings)
-- [ ] Tests use integration-level test harnesses over mocks and stubs — enables internal refactoring without breaking tests
-- [ ] Edge cases and errors covered
-
-Can't check all boxes? You skipped TDD. Start over.
-
 ## When Stuck
 
-| Problem | Solution |
-|-|-|
+| Problem                | Solution                                                             |
+| ---------------------- | -------------------------------------------------------------------- |
 | Don't know how to test | Write wished-for API. Write assertion first. Ask your human partner. |
-| Test too complicated | Design too complicated. Simplify interface. |
+| Test too complicated   | Design too complicated. Simplify interface.                          |
 
 Bug found? Write failing test reproducing it. Follow TDD cycle. Never fix bugs without a test.
